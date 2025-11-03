@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>모텔 건물 일일 점검표</title>
+
+<script>
+// 날짜 자동 입력
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('date').value = today;
+
+  // ✅ PC / 모바일 구분 후 capture 속성 자동 설정
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const fileInputs = document.querySelectorAll('input[type="file"][accept="image/*"]');
+  fileInputs.forEach(input => {
+    if (isMobile) {
+      input.setAttribute('capture', 'camera'); // 📱 카메라 바로 실행
+    } else {
+      input.removeAttribute('capture'); // 💻 PC는 파일 선택창
+    }
+  });
+});
+
+// ✅ AI 이미지 분석 기능
+async function analyzeImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const parentTd = input.closest("td");
+  parentTd.style.opacity = "0.5";
+  parentTd.style.pointerEvents = "none";
+  const loadingMsg = document.createElement("div");
+  loadingMsg.innerText = "🔍 AI 분석 중...";
+  loadingMsg.style.color = "#2f54eb";
+  loadingMsg.style.fontSize = "0.85em";
+  parentTd.appendChild(loadingMsg);
+
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = async () => {
+    const base64Image = reader.result;
+    try {
+      const response = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer YOUR_API_KEY",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          input: [
+            {
+              role: "user",
+              content: [
+                { type: "input_text", text: "이 사진에서 시설에 이상(파손, 누수, 오염, 조명 불량 등)이 있는지 간단히 판단해줘. 이상이 없으면 '정상', 있으면 '이상'이라고만 말해." },
+                { type: "input_image", image_url: base64Image }
+              ],
+            },
+          ],
+        }),
+      });
+
+      const result = await response.json();
+      const output = result.output?.[0]?.content?.[0]?.text || "결과 없음";
+
+      // 결과 표시 및 자동선택
+      if (output.includes("이상")) {
+        const abnormal = parentTd.querySelector('input[value="이상"]');
+        if (abnormal) abnormal.checked = true;
+      } else {
+        const normal = parentTd.querySelector('input[value="정상"]');
+        if (normal) normal.checked = true;
+      }
+
+      loadingMsg.innerText = "✅ 분석 완료: " + output;
+    } catch (err) {
+      loadingMsg.innerText = "❌ 분석 실패";
+      console.error(err);
+    } finally {
+      parentTd.style.opacity = "1";
+      parentTd.style.pointerEvents = "auto";
+    }
+  };
+}
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap');
+body { font-family:'Noto Sans KR',sans-serif; background:linear-gradient(135deg,#e6ebf5 0%,#f8fafc 100%); margin:0; padding:30px 20px 100px; color:#2f3542; }
+h1 { text-align:center; color:#1a2e59; font-weight:600; font-size:2em; margin-bottom:15px; }
+.info-bar { max-width:1000px; margin:0 auto 25px; background:rgba(255,255,255,0.7); backdrop-filter:blur(10px); padding:15px 20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.info-bar label { font-weight:500; margin-right:10px; }
+.info-bar input { border:1px solid #cfd8e3; border-radius:6px; padding:6px 10px; font-size:0.9em; outline:none; }
+.table-wrapper { max-width:1000px; margin:0 auto; background:rgba(255,255,255,0.8); border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.08); overflow-x:auto; }
+table { width:100%; border-collapse:collapse; min-width:850px; }
+th,td { padding:14px 16px; font-size:0.95em; border-bottom:1px solid #eef1f5; text-align:left; }
+th { background-color:rgba(240,244,250,0.9); font-weight:600; color:#2d3e50; text-align:center; }
+.section-title { background:linear-gradient(180deg,#e7edfb,#d8e2fa); color:#1846a3; font-weight:600; text-align:center; }
+input[type="radio"], input[type="checkbox"] { appearance:none; width:16px; height:16px; border:2px solid #9bb5e0; border-radius:50%; cursor:pointer; position:relative; }
+input[type="radio"]:checked, input[type="checkbox"]:checked { border-color:#3a7bed; background-color:#3a7bed; }
+input[type="file"] { margin-top:6px; font-size:0.8em; }
+button { position:fixed; bottom:20px; right:20px; background:rgba(58,123,237,0.9); color:#fff; border:none; padding:14px 30px; font-size:1rem; border-radius:50px; box-shadow:0 4px 14px rgba(58,123,237,0.4); cursor:pointer; }
+</style>
+</head>
+
+<body>
+<h1>🏨 모텔 건물 일일 점검표</h1>
+
+<div class="info-bar">
+  <div class="info-row">
+    <div class="info-cell header">구분</div>
+    <div class="info-cell header">점검 항목</div>
+    <div class="info-cell header">점검 내용 / 이상 유무</div>
+    <div class="info-cell header">비고</div>
+  </div>
+  <div class="info-row">
+    <div class="info-cell"><input type="text" id="building" placeholder="건물명"></div>
+    <div class="info-cell"><input type="date" id="date"></div>
+    <div class="info-cell"><input type="text" id="person" placeholder="담당자"></div>
+    <div class="info-cell"><button type="button" style="width:100%;">저장</button></div>
+  </div>
+</div>
+  
+  <!-- 외부 -->
+  <tr><td rowspan="4" class="section-title">외부</td>
+      <td>주차장</td>
+      <td><label><input type="radio" name="주차장" value="정상"> 이상 없음</label>
+          <label><input type="radio" name="주차장" value="이상"> 이상 있음</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>간판</td>
+      <td><label><input type="radio" name="간판" value="정상"> 조명 정상</label>
+          <label><input type="radio" name="간판" value="이상"> 파손</label>
+          <label><input type="radio" name="간판" value="점검"> 점등 불량</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>입구</td>
+      <td><label><input type="radio" name="입구" value="정상"> 청결</label>
+          <label><input type="radio" name="입구" value="이상"> 쓰레기</label>
+          <label><input type="radio" name="입구" value="점검"> 미끄럼 위험</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>배수로</td>
+      <td><label><input type="radio" name="배수로" value="정상"> 막힘 없음</label>
+          <label><input type="radio" name="배수로" value="이상"> 청소 필요</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+
+  <!-- B1 -->
+  <tr><td rowspan="7" class="section-title">B1 (지하)</td>
+      <td>입구문 / 출구문</td>
+      <td><label><input type="radio" name="입구문" value="정상"> 정상 작동</label>
+          <label><input type="radio" name="입구문" value="점검"> 점검 필요</label></td>
+        <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>보일러</td>
+      <td><label><input type="radio" name="보일러" value="정상"> 정상</label>
+          <label><input type="radio" name="보일러" value="이상"> 누수</label>
+          <label><input type="radio" name="보일러" value="점검"> 온도 이상</label></td>
+        <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>전등</td>
+      <td><label><input type="radio" name="전등" value="정상"> 점등 정상</label>
+          <label><input type="radio" name="전등" value="점검"> 교체 필요</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>누수</td>
+      <td><label><input type="radio" name="누수" value="정상"> 없음</label>
+          <label><input type="radio" name="누수" value="점검"> 확인 필요</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>소화기</td>
+      <td><label><input type="radio" name="B1소화기" value="정상"> 정상</label>
+          <label><input type="radio" name="B1소화기" value="점검"> 교체 필요</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>카메라</td>
+      <td><label><input type="radio" name="B1카메라" value="정상"> 영상 정상</label>
+          <label><input type="radio" name="B1카메라" value="점검"> 고장</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>계단</td>
+      <td><label><input type="radio" name="B1계단" value="정상"> 청결</label>
+          <label><input type="radio" name="B1계단" value="이상"> 조명 이상</label>
+          <label><input type="radio" name="B1계단" value="점검"> 미끄럼</label></td>
+        <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+
+  <!-- 1층 -->
+  <tr><td rowspan="6" class="section-title">1층</td>
+      <td>화장실</td>
+      <td><label><input type="radio" name="화장실1" value="정상"> 청결</label>
+          <label><input type="radio" name="화장실1" value="이상"> 누수</label>
+          <label><input type="radio" name="화장실1" value="점검"> 악취</label></td>
+        <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>현관문</td>
+      <td><label><input type="radio" name="현관문1" value="정상"> 정상</label>
+          <label><input type="radio" name="현관문1" value="점검"> 수리 필요</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>자동문</td>
+      <td><label><input type="radio" name="자동문1" value="정상"> 정상 작동</label>
+          <label><input type="radio" name="자동문1" value="이상"> 센서 이상</label></td>
+        <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>키오스크</td>
+      <td><label><input type="radio" name="키오스크" value="정상"> 전원 정상</label>
+          <label><input type="radio" name="키오스크" value="이상"> 작동 오류</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>보관함</td>
+      <td><label><input type="radio" name="보관함1" value="정상"> 정상</label>
+          <label><input type="radio" name="보관함1" value="이상"> 고장</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>계단</td>
+      <td><label><input type="radio" name="계단1" value="정상"> 청결</label>
+          <label><input type="radio" name="계단1" value="이상"> 조명 이상</label></td>
+      <td> <input type="file" accept="image/*"  onchange="analyzeImage(this)"></td></tr>
+
+  <!-- 2~5층 -->
+  <!-- 각 층 동일 구조 -->
+  <tr><td rowspan="4" class="section-title">2층</td>
+      <td>창문1, 창문2</td>
+      <td><label><input type="radio" name="창문2" value="정상"> 정상</label>
+          <label><input type="radio" name="창문2" value="이상"> 파손</label>
+          <label><input type="radio" name="창문2" value="점검"> 잠금 불량</label></td>
+        <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>카메라</td>
+      <td><label><input type="radio" name="카메라2" value="정상"> 영상 정상</label>
+          <label><input type="radio" name="카메라2" value="점검"> 점검 필요</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>소화기</td>
+      <td><label><input type="radio" name="소화기2" value="정상"> 정상</label>
+          <label><input type="radio" name="소화기2" value="점검"> 교체 필요</label></td>
+        <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>계단</td>
+      <td><label><input type="radio" name="계단2" value="정상"> 청결</label>
+          <label><input type="radio" name="계단2" value="이상"> 미끄럼</label>
+          <label><input type="radio" name="계단2" value="점검"> 조명 이상</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+
+  <tr><td rowspan="4" class="section-title">3층</td>
+      <td>창문1, 창문2</td>
+      <td><label><input type="radio" name="창문3" value="정상"> 정상</label>
+          <label><input type="radio" name="창문3" value="이상"> 파손</label>
+          <label><input type="radio" name="창문3" value="점검"> 잠금 불량</label></td>
+        <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>카메라</td>
+      <td><label><input type="radio" name="카메라3" value="정상"> 영상 정상</label>
+          <label><input type="radio" name="카메라3" value="점검"> 점검 필요</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>소화기</td>
+      <td><label><input type="radio" name="소화기3" value="정상"> 정상</label>
+          <label><input type="radio" name="소화기3" value="점검"> 교체 필요</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>계단</td>
+      <td><label><input type="radio" name="계단3" value="정상"> 청결</label>
+          <label><input type="radio" name="계단3" value="이상"> 미끄럼</label>
+          <label><input type="radio" name="계단3" value="점검"> 조명 이상</label></td>
+        <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+
+  <tr><td rowspan="4" class="section-title">4층</td>
+      <td>창문1, 창문2</td>
+      <td><label><input type="radio" name="창문4" value="정상"> 정상</label>
+          <label><input type="radio" name="창문4" value="이상"> 파손</label>
+          <label><input type="radio" name="창문4" value="점검"> 잠금 불량</label></td>
+        <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>카메라</td>
+      <td><label><input type="radio" name="카메라4" value="정상"> 영상 정상</label>
+          <label><input type="radio" name="카메라4" value="점검"> 점검 필요</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>소화기</td>
+      <td><label><input type="radio" name="소화기4" value="정상"> 정상</label>
+          <label><input type="radio" name="소화기4" value="점검"> 교체 필요</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>계단</td>
+      <td><label><input type="radio" name="계단4" value="정상"> 청결</label>
+          <label><input type="radio" name="계단4" value="이상"> 미끄럼</label>
+          <label><input type="radio" name="계단4" value="점검"> 조명 이상</label></td>
+      <td> <input type="file" accept="image/*"  onchange="analyzeImage(this)"></td></tr>
+
+  <tr><td rowspan="4" class="section-title">5층</td>
+      <td>창문1, 창문2</td>
+      <td><label><input type="radio" name="창문5" value="정상"> 정상</label>
+          <label><input type="radio" name="창문5" value="이상"> 파손</label>
+          <label><input type="radio" name="창문5" value="점검"> 잠금 불량</label></td>
+        <td> <input type="file" accept="image/*"  onchange="analyzeImage(this)"></td></tr>
+  <tr><td>카메라</td>
+      <td><label><input type="radio" name="카메라5" value="정상"> 영상 정상</label>
+          <label><input type="radio" name="카메라5" value="점검"> 점검 필요</label></td>
+        <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>소화기</td>
+      <td><label><input type="radio" name="소화기5" value="정상"> 정상</label>
+          <label><input type="radio" name="소화기5" value="점검"> 교체 필요</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>계단</td>
+      <td><label><input type="radio" name="계단5" value="정상"> 청결</label>
+          <label><input type="radio" name="계단5" value="이상"> 미끄럼</label>
+          <label><input type="radio" name="계단5" value="점검"> 조명 이상</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+
+  <!-- 옥상 -->
+  <tr><td rowspan="3" class="section-title">옥상</td>
+      <td>카메라</td>
+      <td><label><input type="radio" name="옥상카메라" value="정상"> 영상 정상</label>
+          <label><input type="radio" name="옥상카메라" value="점검"> 고장</label></td>
+        <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>소화기</td>
+      <td><label><input type="radio" name="옥상소화기" value="정상"> 정상</label>
+          <label><input type="radio" name="옥상소화기" value="점검"> 교체 필요</label></td>
+      <td> <input type="file" accept="image/*" onchange="analyzeImage(this)"></td></tr>
+  <tr><td>기타</td>
+      <td><label><input type="checkbox" name="옥상기타"> 배수구</label>
+          <label><input type="checkbox" name="옥상기타"> 난간</label>
+          <label><input type="checkbox" name="옥상기타"> 안테나</label></td></tr>
+</table>
+
+<button onclick="alert('점검 결과가 임시 저장되었습니다.')">저장</button>
+
+</body>
+</html>
