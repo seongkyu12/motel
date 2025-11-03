@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap');
+body {  font-family:Arial,sans-serif;
+        
+        background:#f5f5f5; 
+        margin:10px; 
+        padding:30px 20px 100px; 
+        color:#2f3542; }
+        label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+  input[type="text"], textarea, select, button {
+    width: 100%;
+    padding: 16px;
+    font-size: 18px; /* 모바일에서 터치하기 좋은 크기 */
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+
+  button {
+    background: #007bff;
+    color: #fff;
+    border: none;
+  }
+
+  button:active {
+    background: #0056b3;
+  }
+h1 { text-align:center;
+     color:#1a2e59; 
+     font-weight:600; 
+     font-size:2em; 
+     margin-bottom:15px; }
+.info-bar { 
+    max-width:1000px;  
+    margin:0 auto 25px; 
+    background:rgba(255,255,255,0.7);
+    backdrop-filter:blur(10px); 
+    padding:15px 20px; 
+    border-radius:10px; 
+    box-shadow:0 2px 8px rgba(0,0,0,0.05); 
+    display:flex; 
+    justify-content:space-between; 
+    flex-wrap:wrap; gap:10px; }
+.info-bar label { 
+    font-weight:500; 
+    margin-right:10px; }
+.info-bar input { 
+    border:1px solid #cfd8e3; 
+    border-radius:6px; 
+    padding:6px 10px; 
+    font-size:0.9em; 
+    outline:none; }
+.table-wrapper { 
+    max-width:1000px; 
+    margin:0 auto; 
+    background:rgba(255,255,255,0.8); 
+    border-radius:12px; 
+    box-shadow:0 6px 18px rgba(0,0,0,0.08); 
+    overflow-x:auto; }
+table { 
+    width:100%; 
+    border-collapse:collapse; 
+    min-width:850px; }
+th,td { 
+    padding:14px 16px; 
+    font-size:0.95em; 
+    border-bottom:1px solid #eef1f5; 
+    text-align:left; }
+th { 
+    background-color:rgba(240,244,250,0.9); 
+    font-weight:600; 
+    color:#2d3e50; 
+    text-align:center; }
+.section-title { 
+    background:linear-gradient(180deg,#e7edfb,#d8e2fa); 
+    color:#1846a3; 
+    font-weight:600; 
+    text-align:center; }
+input[type="radio"], input[type="checkbox"] { 
+    appearance:none; 
+    width:16px; 
+    height:16px; 
+    border:2px solid #9bb5e0;
+    border-radius:50%; 
+    cursor:pointer; 
+    position:relative; }
+input[type="radio"]:checked, input[type="checkbox"]:checked { 
+    border-color:#3a7bed; 
+    background-color:#3a7bed; }
+input[type="file"] { 
+    margin-top:6px; 
+    font-size:0.8em; }
+button { 
+    position:fixed; 
+    bottom:20px; right:20px; 
+    background:rgba(58,123,237,0.9); 
+    color:#fff; 
+    border:none; 
+    padding:14px 30px; 
+    font-size:1rem; 
+    border-radius:50px; 
+    box-shadow:0 4px 14px rgba(58,123,237,0.4); 
+    cursor:pointer; }
